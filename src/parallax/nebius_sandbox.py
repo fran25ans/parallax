@@ -60,7 +60,7 @@ def ticketshop_sandbox_plan() -> list[str]:
         "Use python:3.12-slim with the standalone TicketShop fixture",
         "Create one persistent checkpoint containing the fixture and baseline SQLite database",
         "Run a disposable control branch from the checkpoint",
-        "Run a disposable response-lost branch from the same checkpoint",
+        "Run the Nemotron-selected capability in a disposable branch from the same checkpoint",
         "Parse branch JSON and apply deterministic invariant PAY-001",
         "Persist a credential-free counterfactual proof",
     ]
@@ -71,7 +71,7 @@ def stock_race_sandbox_plan() -> list[str]:
         "Use python:3.12-slim with the standalone stock-race fixture",
         "Create one persistent checkpoint containing one remaining ticket",
         "Run a disposable sequential control branch from the checkpoint",
-        "Run a disposable interleaved-buyer branch from the same checkpoint",
+        "Run the Nemotron-selected capability in a disposable branch from the same checkpoint",
         "Apply deterministic invariant STOCK-001 to both final states",
         "Persist a credential-free counterfactual proof",
     ]
@@ -153,7 +153,10 @@ def run_live_sandbox_smoke(output: Path) -> SandboxBranchProof:
     return proof
 
 
-def run_live_ticketshop_experiment(output: Path) -> SandboxCounterfactualProof:
+def run_live_ticketshop_experiment(
+    output: Path,
+    intervention: str = "drop_response_after_commit",
+) -> SandboxCounterfactualProof:
     if not live_nebius_spend_allowed():
         raise RuntimeError(
             "Live Nebius execution is disabled. Set "
@@ -215,7 +218,7 @@ def run_live_ticketshop_experiment(output: Path) -> SandboxCounterfactualProof:
             command="python",
             args=(
                 "/parallax/sandbox_experiment.py",
-                "response-lost",
+                intervention,
                 "/parallax/ticketshop.sqlite3",
             ),
         ).wait()
@@ -238,7 +241,7 @@ def run_live_ticketshop_experiment(output: Path) -> SandboxCounterfactualProof:
         control=control,
         counterfactual=counterfactual,
         same_checkpoint=True,
-        single_intervention="response_after_commit=LOST",
+        single_intervention=f"capability={intervention}",
         proven=proven,
     )
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -246,7 +249,10 @@ def run_live_ticketshop_experiment(output: Path) -> SandboxCounterfactualProof:
     return proof
 
 
-def run_live_stock_race_experiment(output: Path) -> SandboxCounterfactualProof:
+def run_live_stock_race_experiment(
+    output: Path,
+    intervention: str = "interleave_two_actors_after_read",
+) -> SandboxCounterfactualProof:
     if not live_nebius_spend_allowed():
         raise RuntimeError(
             "Live Nebius execution is disabled. Set "
@@ -313,7 +319,7 @@ def run_live_stock_race_experiment(output: Path) -> SandboxCounterfactualProof:
             command="python",
             args=(
                 "/parallax/stock_race_experiment.py",
-                "race",
+                intervention,
                 "/parallax/stock.sqlite3",
             ),
         ).wait()
@@ -337,7 +343,7 @@ def run_live_stock_race_experiment(output: Path) -> SandboxCounterfactualProof:
         control=control,
         counterfactual=counterfactual,
         same_checkpoint=True,
-        single_intervention="buyers_after_stock_read=INTERLEAVED",
+        single_intervention=f"capability={intervention}",
         proven=proven,
     )
     output.parent.mkdir(parents=True, exist_ok=True)

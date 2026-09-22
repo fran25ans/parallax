@@ -1,0 +1,35 @@
+{
+  "branch_point": "buyer A reads stock=1",
+  "intervention": {
+    "type": "interleave_two_actors_after_read"
+  },
+  "hypothesis": "If a second buyer's read is interleaved after the first buyer's read but before the first buyer's commit, then both buyers may commit a sale, causing stock to become negative or sold_count to exceed 1.",
+  "expected_observable": "stock < 0 or sold_count > 1",
+  "target_invariant": "STOCK-001",
+  "reason": "Interleaving another actor after a read directly creates the concurrent read\u2011then\u2011update race condition that the invariant is meant to prevent, making it a stronger test than delays, drops, or simple duplication which do not guarantee overlapping reads.",
+  "ranked_candidates": [
+    {
+      "type": "interleave_two_actors_after_read",
+      "score": 0.9,
+      "rationale": "Creates concurrent reads that can violate the invariant."
+    },
+    {
+      "type": "duplicate_request",
+      "score": 0.6,
+      "rationale": "May cause double commit if the operation is not idempotent, but less likely to expose a race."
+    },
+    {
+      "type": "delay_response",
+      "score": 0.4,
+      "rationale": "Can widen timing windows but does not guarantee overlapping reads from distinct actors."
+    }
+  ],
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "usage": {
+    "completion_tokens": 912,
+    "prompt_tokens": 673,
+    "total_tokens": 1585,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 673
+  }
+}

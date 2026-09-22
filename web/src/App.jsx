@@ -38,6 +38,10 @@ function provenanceLabel(model) {
   return model?.includes("nemotron") ? "Nemotron Super" : model || "AI model";
 }
 
+function humanize(value) {
+  return String(value || "").replaceAll("_", " ");
+}
+
 function Branch({ tone, name, subtitle, events, step, resultCount, metricLabel, invariant }) {
   const visibleEvents = events.filter((_, index) => index <= step);
   const isCounter = tone === "counter";
@@ -80,7 +84,10 @@ function App() {
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
-    fetch("/api/proofs")
+    const evidenceUrl = import.meta.env.PROD
+      ? `${import.meta.env.BASE_URL}proofs.json`
+      : "/api/proofs";
+    fetch(evidenceUrl)
       .then((response) => {
         if (!response.ok) throw new Error("Evidence API is unavailable");
         return response.json();
@@ -124,9 +131,10 @@ function App() {
   const isStock = proof.invariant === "STOCK-001";
   const metric = isStock ? "sold_count" : "payment_count";
   const metricLabel = isStock ? "Tickets sold" : "Payments committed";
-  const interventionLabel = isStock ? "Interleave two buyers" : "Drop HTTP response";
-  const branchPointLabel = isStock ? "After both stock reads" : "After payment commit";
+  const interventionLabel = humanize(proof.planned_intervention);
+  const branchPointLabel = humanize(proof.branch_point);
   const deltaLabel = isStock ? "+1 oversold ticket" : "+1 duplicate payment";
+  const rankedCandidates = proof.ranked_candidates || [];
   const selectedIndex = Math.max(0, catalog.findIndex((entry) => entry.id === selected));
   const selectExperiment = (entry) => {
     setPlaying(false);
@@ -150,6 +158,13 @@ function App() {
           <span className="eyebrow">COUNTERFACTUAL EXPERIMENT #{String(selectedIndex + 1).padStart(3, "0")}</span>
           <h1>One checkpoint. Two futures. One causal counterexample.</h1>
           <p>{proof.hypothesis}</p>
+          {rankedCandidates.length > 0 && (
+            <div className="planner-ranking">
+              <Bot size={16} />
+              <span>NEMOTRON RANKED {rankedCandidates.length} CANDIDATES</span>
+              <strong>{rankedCandidates.map((candidate) => humanize(candidate.type)).join("  >  ")}</strong>
+            </div>
+          )}
         </div>
         <div className={`verdict ${complete ? "verdict--shown" : ""}`}>
           <span>CAUSAL COUNTEREXAMPLE</span>
@@ -218,6 +233,7 @@ function App() {
           </div>
           <div className="delta"><span>CAUSAL DELTA</span><strong>{deltaLabel}</strong></div>
           <ul className="checks">
+            <li><Check /> Planner ranking valid</li>
             <li><Check /> Same checkpoint</li>
             <li><Check /> One intervention</li>
             <li><Check /> Control passes</li>
@@ -230,7 +246,7 @@ function App() {
       </div>
 
       <footer className="provenance">
-        <div><Bot /><span>AI PROPOSED</span><strong>{provenanceLabel(proof.model)}</strong></div>
+        <div><Bot /><span>NEMOTRON PLANNED</span><strong>{provenanceLabel(proof.model)}</strong></div>
         <b>→</b>
         <div><ServerCog /><span>SANDBOX EXECUTED</span><strong>Nebius Sandboxes</strong></div>
         <b>→</b>

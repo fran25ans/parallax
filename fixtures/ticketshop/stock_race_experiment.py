@@ -49,12 +49,13 @@ def commit_sale(connection: sqlite3.Connection, buyer: str, events: list[str]) -
 
 
 def execute(database: Path, branch: str) -> None:
+    branch = {"race": "interleave_two_actors_after_read"}.get(branch, branch)
     events: list[str] = []
     with sqlite3.connect(database) as connection:
         if branch == "control":
             if read_stock(connection, "buyer-a", events) > 0:
                 commit_sale(connection, "buyer-a", events)
-        elif branch == "race":
+        elif branch == "interleave_two_actors_after_read":
             stock_a = read_stock(connection, "buyer-a", events)
             stock_b = read_stock(connection, "buyer-b", events)
             events.append("INTERLEAVE buyers after stock read")
@@ -62,6 +63,20 @@ def execute(database: Path, branch: str) -> None:
                 commit_sale(connection, "buyer-a", events)
             if stock_b > 0:
                 commit_sale(connection, "buyer-b", events)
+        elif branch in {"duplicate_request", "drop_response_after_commit"}:
+            if read_stock(connection, "buyer-a", events) > 0:
+                commit_sale(connection, "buyer-a", events)
+            events.append("RETRY purchase")
+            if read_stock(connection, "buyer-a", events) > 0:
+                commit_sale(connection, "buyer-a", events)
+        elif branch in {
+            "delay_response",
+            "reorder_independent_events",
+            "no_intervention",
+        }:
+            if read_stock(connection, "buyer-a", events) > 0:
+                commit_sale(connection, "buyer-a", events)
+            events.append(branch.upper())
         else:
             raise ValueError(f"unknown branch: {branch}")
 
@@ -89,14 +104,23 @@ def execute(database: Path, branch: str) -> None:
 
 def main() -> int:
     if len(sys.argv) != 3:
-        raise SystemExit("usage: stock_race_experiment.py prepare|control|race DB")
+        raise SystemExit("usage: stock_race_experiment.py ACTION DB")
     action = sys.argv[1]
     database = Path(sys.argv[2])
     if action == "prepare":
         prepare(database)
         print(json.dumps({"checkpoint": "ready", "database": str(database)}))
         return 0
-    if action in {"control", "race"}:
+    if action in {
+        "control",
+        "race",
+        "delay_response",
+        "drop_response_after_commit",
+        "duplicate_request",
+        "interleave_two_actors_after_read",
+        "reorder_independent_events",
+        "no_intervention",
+    }:
         execute(database, action)
         return 0
     raise SystemExit(f"unknown action: {action}")

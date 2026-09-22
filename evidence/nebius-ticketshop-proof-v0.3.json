@@ -1,0 +1,37 @@
+{
+  "checkpoint_uuid": "939645f2-e92f-4dab-83d5-47c09d59ca07",
+  "fixture_sha256": "sha256:331f38ae4e5da1e10997e8a8e03266f9a3e8a036cac81595f75ae352831b52e0",
+  "control": {
+    "branch": "control",
+    "events": [
+      "actor-a POST /checkout",
+      "actor-a READ cart",
+      "actor-a COMMIT payment",
+      "HTTP 200 delivered"
+    ],
+    "invariant": "PASS",
+    "payment_count": 1,
+    "ticket_count": 1,
+    "total_charged_cents": 4900
+  },
+  "counterfactual": {
+    "branch": "interleave_two_actors_after_read",
+    "events": [
+      "actor-a POST /checkout",
+      "actor-b POST /checkout",
+      "actor-a READ cart",
+      "actor-b READ cart",
+      "INTERLEAVE actors after cart read",
+      "actor-a COMMIT payment",
+      "actor-b COMMIT payment",
+      "HTTP 200 delivered"
+    ],
+    "invariant": "FAIL",
+    "payment_count": 2,
+    "ticket_count": 1,
+    "total_charged_cents": 9800
+  },
+  "same_checkpoint": true,
+  "single_intervention": "capability=interleave_two_actors_after_read",
+  "proven": true
+}

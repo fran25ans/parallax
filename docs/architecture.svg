@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1440" height="560" viewBox="0 0 1440 560" role="img" aria-labelledby="title desc">
   <title id="title">PARALLAX counterfactual proof architecture</title>
-  <desc id="desc">Nemotron proposes one intervention, Nebius creates a checkpoint and two branches, and PARALLAX deterministically verifies the resulting evidence.</desc>
+  <desc id="desc">Nemotron ranks candidate interventions, Nebius creates a checkpoint and two branches, and PARALLAX deterministically verifies the resulting evidence.</desc>
   <rect width="1440" height="560" fill="#090b0e"/>
   <text x="64" y="64" fill="#eef2f3" font-family="Arial, sans-serif" font-size="28" font-weight="700">PARALLAX PROOF PIPELINE</text>
   <text x="64" y="94" fill="#829099" font-family="Arial, sans-serif" font-size="15">AI proposes. Infrastructure executes. Deterministic code decides.</text>
@@ -8,7 +8,7 @@
     <rect x="64" y="154" width="238" height="116" fill="#11161b" stroke="#49d6d0" stroke-width="2"/>
     <text x="84" y="184" fill="#49d6d0" font-size="12" font-weight="700">01 · AI PROPOSED</text>
     <text x="84" y="220" fill="#eef2f3" font-size="22" font-weight="700">Nemotron Super</text>
-    <text x="84" y="247" fill="#9ca8ae" font-size="14">One bounded intervention</text>
+    <text x="84" y="247" fill="#9ca8ae" font-size="14">Ranks 3 executable candidates</text>
     <path d="M302 212 H370" stroke="#53616a" stroke-width="2"/><path d="M360 204 L370 212 L360 220" fill="none" stroke="#53616a" stroke-width="2"/>
     <rect x="370" y="154" width="238" height="116" fill="#11161b" stroke="#d8a84e" stroke-width="2"/>
     <text x="390" y="184" fill="#d8a84e" font-size="12" font-weight="700">02 · CHECKPOINT</text>

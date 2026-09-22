@@ -1,0 +1,35 @@
+{
+  "branch_point": "request accepted",
+  "intervention": {
+    "type": "interleave_two_actors_after_read"
+  },
+  "hypothesis": "If two clients interleave after reading the same cart, both will successfully insert and commit a payment, causing more than one successful payment.",
+  "expected_observable": "payment_count will increase from 1 to 2 while ticket_count remains unchanged and response_status stays 200 for both responses.",
+  "target_invariant": "PAY-001",
+  "reason": "This intervention directly creates a race condition where two independent transactions can commit payments on the same cart, testing the invariant without depending on client retry logic or message loss, making it a stronger test than delaying or dropping responses.",
+  "ranked_candidates": [
+    {
+      "type": "interleave_two_actors_after_read",
+      "score": 0.9,
+      "rationale": "Creates concurrent conflicting writes that can directly violate the at-most-one-payment invariant."
+    },
+    {
+      "type": "delay_response",
+      "score": 0.7,
+      "rationale": "Allows a client to retry after payment commit, potentially causing a second payment if the server is not idempotent."
+    },
+    {
+      "type": "drop_response_after_commit",
+      "score": 0.5,
+      "rationale": "Similar to delay but loses the acknowledgment entirely; relies on client timeout behavior, making it slightly less direct."
+    }
+  ],
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "usage": {
+    "completion_tokens": 969,
+    "prompt_tokens": 663,
+    "total_tokens": 1632,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 663
+  }
+}

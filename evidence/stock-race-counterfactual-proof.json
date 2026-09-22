@@ -1,23 +1,42 @@
 {
-  "experiment_id": "px_8d53002863b5",
+  "experiment_id": "px_e2f2c7cd9679",
   "verdict": "PROVEN",
   "model_role": "hypothesis_only",
   "model": "nvidia/nemotron-3-super-120b-a12b",
   "model_usage": {
-    "completion_tokens": 277,
-    "prompt_tokens": 224,
-    "total_tokens": 501,
+    "completion_tokens": 912,
+    "prompt_tokens": 673,
+    "total_tokens": 1585,
     "prompt_cache_hit_tokens": 0,
-    "prompt_cache_miss_tokens": 224
+    "prompt_cache_miss_tokens": 673
   },
-  "hypothesis": "Two buyers interleaving after reading stock will both observe stock=1, each insert a sale and decrement stock, causing the final stock to become -1 and the ticket to be sold twice.",
-  "branch_point": "after_stock_read_before_sale_insert",
+  "hypothesis": "If a second buyer's read is interleaved after the first buyer's read but before the first buyer's commit, then both buyers may commit a sale, causing stock to become negative or sold_count to exceed 1.",
+  "expected_observable": "stock < 0 or sold_count > 1",
+  "ranked_candidates": [
+    {
+      "type": "interleave_two_actors_after_read",
+      "score": 0.9,
+      "rationale": "Creates concurrent reads that can violate the invariant."
+    },
+    {
+      "type": "duplicate_request",
+      "score": 0.6,
+      "rationale": "May cause double commit if the operation is not idempotent, but less likely to expose a race."
+    },
+    {
+      "type": "delay_response",
+      "score": 0.4,
+      "rationale": "Can widen timing windows but does not guarantee overlapping reads from distinct actors."
+    }
+  ],
+  "branch_point": "buyer A reads stock=1",
   "invariant": "STOCK-001",
-  "planned_intervention": "interleave_two_buyers_after_stock_read",
-  "executed_intervention": "interleave_two_buyers_after_stock_read",
+  "planned_intervention": "interleave_two_actors_after_read",
+  "executed_intervention": "interleave_two_actors_after_read",
   "plan_matches_execution": true,
+  "planner_selection_valid": true,
   "same_checkpoint": true,
-  "checkpoint_uuid": "ce5050ab-9963-4275-b596-115bb0fb7ea1",
+  "checkpoint_uuid": "3630a979-c950-4952-bb2a-cd306ffd6226",
   "control": {
     "available_stock": 0,
     "branch": "control",
@@ -30,7 +49,7 @@
   },
   "counterfactual": {
     "available_stock": -1,
-    "branch": "race",
+    "branch": "interleave_two_actors_after_read",
     "events": [
       "buyer-a READ stock=1",
       "buyer-b READ stock=1",
@@ -42,7 +61,7 @@
     "sold_count": 2
   },
   "sources": {
-    "experiment_plan": "sha256:92cb1b63511829ba95c1ae21385b5ac6aae602917e8ee17562f46d07b5bafe30",
-    "sandbox_execution": "sha256:37e04c70c311086f400da184a1f71f796e3f13ee785fc447eb8e64ad9951d9d8"
+    "experiment_plan": "sha256:8188ef7bcc0b68f31ebe758e86f5e70328c77380b2a6253a227dce5793a1713f",
+    "sandbox_execution": "sha256:d59c971a9455d73527963510f6f8cd6e8aeb7be4a07eba2241186ad81f277b7c"
   }
 }

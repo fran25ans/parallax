@@ -35,7 +35,7 @@ class NebiusSandboxSafetyTest(unittest.TestCase):
         self.assertEqual(len(plan), 6)
         self.assertIn("one persistent checkpoint", " ".join(plan))
         self.assertIn("disposable control branch", " ".join(plan))
-        self.assertIn("disposable response-lost branch", " ".join(plan))
+        self.assertIn("Nemotron-selected capability", " ".join(plan))
 
     def test_stock_race_plan_is_bounded_to_three_operations(self) -> None:
         plan = stock_race_sandbox_plan()

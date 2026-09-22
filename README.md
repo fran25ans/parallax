@@ -9,6 +9,8 @@
 
 > **Nemotron proposes. Nebius executes. PARALLAX proves.**
 
+[**Open the live Counterfactual Control Deck**](https://fran25ans.github.io/parallax/)
+
 AI usually explains why software *might* fail. PARALLAX creates a control future
 and a counterfactual future from one identical application state, changes one
 event, and lets deterministic invariants decide whether the alternate timeline
@@ -20,16 +22,17 @@ contains a real causal failure.
 
 ![Synchronized PARALLAX replay](docs/assets/parallax-replay.gif)
 
-1. **Nemotron Super** proposes one bounded, testable intervention.
+1. **Nemotron Super** reads an application manifest, ranks three interventions
+   from six executable capabilities, and selects one bounded experiment.
 2. **Nebius Sandboxes** checkpoints the application and executes two branches.
 3. The control branch preserves normal behavior.
 4. The counterfactual branch changes exactly one causal variable.
 5. **PARALLAX**, not the model, evaluates the final states and issues `PROVEN`
    only when the control passes and the counterfactual fails.
 
-## Public baseline
+## Verified experiments
 
-PARALLAX v0.1.0 contains two independently executed failure classes:
+PARALLAX v0.3.0 contains two independently planned and executed failure classes:
 
 | Invariant | Failure class | Control | Counterfactual | Verdict |
 | --- | --- | --- | --- | --- |
@@ -40,10 +43,33 @@ The committed proofs are small, inspectable JSON documents:
 
 - [PAY-001 assembled proof](evidence/counterfactual-proof.json)
 - [STOCK-001 assembled proof](evidence/stock-race-counterfactual-proof.json)
-- [Baseline hashes and acceptance record](BASELINE.md)
+- [v0.3 generic-planner acceptance record](V0.3.md)
+- [Frozen v0.1 baseline](https://github.com/fran25ans/parallax/tree/v0.1.0)
 
 The replay UI reads those proofs directly. It does not invent findings and it
 makes no paid model or Sandbox calls while open.
+
+## Why Nemotron is necessary
+
+The model is not given a scenario-specific answer. One generic planner receives
+a neutral application manifest, an invariant, observed trace events, measurable
+fields, and the same six executable capabilities for both experiments:
+
+```text
+delay response              duplicate request
+drop response after commit  interleave two actors after read
+reorder independent events  no intervention
+```
+
+Nemotron must rank three unique candidates, select the strongest, identify a
+branch point and declare a measurable expected result. PARALLAX validates this
+schema and passes the selected capability directly to Nebius. Unknown tools,
+duplicate rankings, invalid scores and plan/execution mismatches fail closed.
+
+In the v0.3 live run, Nemotron selected `interleave_two_actors_after_read` for
+both applications for different causal reasons. That choice was not the answer
+used by the original PAY-001 demonstration. Nebius then executed the new choice
+and independently reproduced both failures.
 
 ## Architecture
 
@@ -121,7 +147,9 @@ calls:
 cp .env.example .env.local
 
 .venv/bin/parallax design-experiment --scenario stock-race
-.venv/bin/parallax sandbox-experiment --scenario stock-race
+.venv/bin/parallax sandbox-experiment \
+  --scenario stock-race \
+  --plan evidence/nemotron-stock-race-plan-v0.3.json
 ```
 
 After setting `NEBIUS_API_KEY` and `NEBIUS_PROJECT_ID` in `.env.local`, one
@@ -131,16 +159,18 @@ intentional live run is:
 PARALLAX_ALLOW_NEBIUS_SPEND=true \
   .venv/bin/parallax design-experiment \
   --scenario stock-race --live \
-  --output evidence/nemotron-stock-race-plan.json
+  --output evidence/nemotron-stock-race-plan-v0.3.json
 
 PARALLAX_ALLOW_NEBIUS_SPEND=true \
   .venv/bin/parallax sandbox-experiment \
-  --scenario stock-race --live \
-  --output evidence/nebius-stock-race-proof.json
+  --scenario stock-race \
+  --plan evidence/nemotron-stock-race-plan-v0.3.json \
+  --live \
+  --output evidence/nebius-stock-race-proof-v0.3.json
 
 .venv/bin/parallax assemble-proof \
-  --plan evidence/nemotron-stock-race-plan.json \
-  --execution evidence/nebius-stock-race-proof.json \
+  --plan evidence/nemotron-stock-race-plan-v0.3.json \
+  --execution evidence/nebius-stock-race-proof-v0.3.json \
   --output evidence/stock-race-counterfactual-proof.json
 ```
 
@@ -162,7 +192,7 @@ If any condition is missing, PARALLAX fails closed with `NOT_PROVEN`.
 
 ## Scope
 
-PARALLAX v0.2 focuses on two deeply demonstrated classes rather than broad,
+PARALLAX v0.3 focuses on two deeply demonstrated classes rather than broad,
 shallow scanning. It intentionally excludes extra agents, RAG, model swarms,
 and unrelated vulnerability catalogs.
 

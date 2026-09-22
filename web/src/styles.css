@@ -24,6 +24,10 @@ button, input { font: inherit; }
 .eyebrow { color: #77848d; font: 600 10px "IBM Plex Mono", monospace; }
 h1 { max-width: 860px; margin: 7px 0 8px; font-size: clamp(24px, 2.4vw, 38px); line-height: 1.08; letter-spacing: 0; }
 .summary-band p { max-width: 870px; margin: 0; color: #9ca8ae; font-size: 13px; line-height: 1.5; }
+.planner-ranking { max-width: 980px; margin-top: 13px; display: grid; grid-template-columns: 18px auto 1fr; gap: 8px; align-items: center; color: #718089; }
+.planner-ranking svg { color: #49d6d0; }
+.planner-ranking span { font: 600 9px "IBM Plex Mono", monospace; }
+.planner-ranking strong { min-width: 0; overflow: hidden; color: #b8c2c6; font: 500 9px "IBM Plex Mono", monospace; text-overflow: ellipsis; white-space: nowrap; }
 .verdict { min-height: 76px; padding: 14px 16px; border: 1px solid #343d45; display: grid; align-content: center; background: #11161b; opacity: .45; }
 .verdict span { color: #8c989f; font: 500 10px "IBM Plex Mono", monospace; }
 .verdict strong { margin-top: 5px; font: 700 24px "IBM Plex Mono", monospace; color: #59646c; }
@@ -127,6 +131,8 @@ input[type="range"] { width: 100%; height: 20px; margin: 15px 0 19px; accent-col
   .brand div { display: grid; gap: 2px; }
   .experiment-id { display: none; }
   .summary-band { grid-template-columns: 1fr; padding: 22px 16px; }
+  .planner-ranking { grid-template-columns: 18px 1fr; }
+  .planner-ranking strong { grid-column: 1 / -1; white-space: normal; }
   .experiment-switcher { padding: 0 12px; overflow-x: auto; }
   .workspace { display: block; }
   .context-panel { border-right: 0; border-bottom: 1px solid #293038; }
