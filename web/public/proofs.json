@@ -76,6 +76,20 @@
           "sandbox_execution": "sha256:f8588437b35f44d8544fce58455001b5aba22b8f2bea995e45b8205c0122a1c1"
         },
         "evidence_sha256": "be6bfe275f632446907cb0c416306f544b4e86801119ef730a398a3694290b3e"
+      },
+      "artifacts": {
+        "assembled_proof": {
+          "path": "evidence/counterfactual-proof.json",
+          "sha256": "be6bfe275f632446907cb0c416306f544b4e86801119ef730a398a3694290b3e"
+        },
+        "experiment_plan": {
+          "path": "evidence/nemotron-experiment-plan-v0.3.json",
+          "sha256": "d1e949746d6091d70c733ba903672b77560ddf09da80605066772519429a2454"
+        },
+        "sandbox_execution": {
+          "path": "evidence/nebius-ticketshop-proof-v0.3.json",
+          "sha256": "f8588437b35f44d8544fce58455001b5aba22b8f2bea995e45b8205c0122a1c1"
+        }
       }
     },
     {
@@ -147,6 +161,20 @@
           "sandbox_execution": "sha256:d59c971a9455d73527963510f6f8cd6e8aeb7be4a07eba2241186ad81f277b7c"
         },
         "evidence_sha256": "dc3c69c6059c13a8afb7bc15eb68aca121eb5ad29177cdf0ff5228d5db5031c7"
+      },
+      "artifacts": {
+        "assembled_proof": {
+          "path": "evidence/stock-race-counterfactual-proof.json",
+          "sha256": "dc3c69c6059c13a8afb7bc15eb68aca121eb5ad29177cdf0ff5228d5db5031c7"
+        },
+        "experiment_plan": {
+          "path": "evidence/nemotron-stock-race-plan-v0.3.json",
+          "sha256": "8188ef7bcc0b68f31ebe758e86f5e70328c77380b2a6253a227dce5793a1713f"
+        },
+        "sandbox_execution": {
+          "path": "evidence/nebius-stock-race-proof-v0.3.json",
+          "sha256": "d59c971a9455d73527963510f6f8cd6e8aeb7be4a07eba2241186ad81f277b7c"
+        }
       }
     }
   ]

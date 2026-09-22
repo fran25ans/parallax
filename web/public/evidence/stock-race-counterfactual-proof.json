@@ -1,0 +1,67 @@
+{
+  "experiment_id": "px_e2f2c7cd9679",
+  "verdict": "PROVEN",
+  "model_role": "hypothesis_only",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "model_usage": {
+    "completion_tokens": 912,
+    "prompt_tokens": 673,
+    "total_tokens": 1585,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 673
+  },
+  "hypothesis": "If a second buyer's read is interleaved after the first buyer's read but before the first buyer's commit, then both buyers may commit a sale, causing stock to become negative or sold_count to exceed 1.",
+  "expected_observable": "stock < 0 or sold_count > 1",
+  "ranked_candidates": [
+    {
+      "type": "interleave_two_actors_after_read",
+      "score": 0.9,
+      "rationale": "Creates concurrent reads that can violate the invariant."
+    },
+    {
+      "type": "duplicate_request",
+      "score": 0.6,
+      "rationale": "May cause double commit if the operation is not idempotent, but less likely to expose a race."
+    },
+    {
+      "type": "delay_response",
+      "score": 0.4,
+      "rationale": "Can widen timing windows but does not guarantee overlapping reads from distinct actors."
+    }
+  ],
+  "branch_point": "buyer A reads stock=1",
+  "invariant": "STOCK-001",
+  "planned_intervention": "interleave_two_actors_after_read",
+  "executed_intervention": "interleave_two_actors_after_read",
+  "plan_matches_execution": true,
+  "planner_selection_valid": true,
+  "same_checkpoint": true,
+  "checkpoint_uuid": "3630a979-c950-4952-bb2a-cd306ffd6226",
+  "control": {
+    "available_stock": 0,
+    "branch": "control",
+    "events": [
+      "buyer-a READ stock=1",
+      "buyer-a COMMIT sale"
+    ],
+    "invariant": "PASS",
+    "sold_count": 1
+  },
+  "counterfactual": {
+    "available_stock": -1,
+    "branch": "interleave_two_actors_after_read",
+    "events": [
+      "buyer-a READ stock=1",
+      "buyer-b READ stock=1",
+      "INTERLEAVE buyers after stock read",
+      "buyer-a COMMIT sale",
+      "buyer-b COMMIT sale"
+    ],
+    "invariant": "FAIL",
+    "sold_count": 2
+  },
+  "sources": {
+    "experiment_plan": "sha256:8188ef7bcc0b68f31ebe758e86f5e70328c77380b2a6253a227dce5793a1713f",
+    "sandbox_execution": "sha256:d59c971a9455d73527963510f6f8cd6e8aeb7be4a07eba2241186ad81f277b7c"
+  }
+}

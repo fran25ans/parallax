@@ -4,6 +4,8 @@ import {
   Box,
   Check,
   CircleAlert,
+  Download,
+  FileCheck2,
   FlaskConical,
   Hash,
   Pause,
@@ -11,7 +13,9 @@ import {
   RotateCcw,
   ServerCog,
   ShieldCheck,
+  X,
 } from "lucide-react";
+import { verifyEvidenceBundle } from "./verifyEvidence.js";
 
 const paymentReplay = [
   { label: "Checkpoint S0", control: "Same world state", counter: "Same world state" },
@@ -82,11 +86,10 @@ function App() {
   const [error, setError] = useState("");
   const [step, setStep] = useState(Number(captureParams.get("step") || 0));
   const [playing, setPlaying] = useState(false);
+  const [verification, setVerification] = useState({ state: "idle", result: null, error: "" });
 
   useEffect(() => {
-    const evidenceUrl = import.meta.env.PROD
-      ? `${import.meta.env.BASE_URL}proofs.json`
-      : "/api/proofs";
+    const evidenceUrl = `${import.meta.env.BASE_URL}proofs.json`;
     fetch(evidenceUrl)
       .then((response) => {
         if (!response.ok) throw new Error("Evidence API is unavailable");
@@ -136,11 +139,43 @@ function App() {
   const deltaLabel = isStock ? "+1 oversold ticket" : "+1 duplicate payment";
   const rankedCandidates = proof.ranked_candidates || [];
   const selectedIndex = Math.max(0, catalog.findIndex((entry) => entry.id === selected));
+  const selectedEntry = catalog[selectedIndex];
   const selectExperiment = (entry) => {
     setPlaying(false);
     setStep(0);
     setSelected(entry.id);
     setProof(entry.proof);
+    setVerification({ state: "idle", result: null, error: "" });
+  };
+  const verifyEvidence = async () => {
+    setVerification({ state: "loading", result: null, error: "" });
+    try {
+      const base = import.meta.env.BASE_URL;
+      const artifacts = selectedEntry.artifacts;
+      const load = async (artifact) => {
+        const response = await fetch(`${base}${artifact.path}`);
+        if (!response.ok) throw new Error(`Could not load ${artifact.path}`);
+        return response.text();
+      };
+      const [proofText, planText, executionText] = await Promise.all([
+        load(artifacts.assembled_proof),
+        load(artifacts.experiment_plan),
+        load(artifacts.sandbox_execution),
+      ]);
+      const result = await verifyEvidenceBundle({ proofText, planText, executionText, artifacts });
+      setVerification({ state: result.verified ? "verified" : "failed", result, error: "" });
+    } catch (reason) {
+      setVerification({ state: "failed", result: null, error: reason.message });
+    }
+  };
+  const downloadReceipt = () => {
+    const contents = JSON.stringify(verification.result.receipt, null, 2);
+    const href = URL.createObjectURL(new Blob([`${contents}\n`], { type: "application/json" }));
+    const anchor = document.createElement("a");
+    anchor.href = href;
+    anchor.download = `${proof.experiment_id}-verification-receipt.json`;
+    anchor.click();
+    URL.revokeObjectURL(href);
   };
   return (
     <main className="deck">
@@ -202,7 +237,14 @@ function App() {
           <section className="integrity">
             <span className="eyebrow">EVIDENCE INTEGRITY</span>
             <div><Hash size={17} /><code>{shortHash}</code></div>
-            <span className="verified"><ShieldCheck size={15} /> SHA-256 VERIFIED</span>
+            <span className={verification.state === "verified" ? "verified" : "recorded"}>
+              {verification.state === "verified" ? <ShieldCheck size={15} /> : <FileCheck2 size={15} />}
+              {verification.state === "verified" ? "BROWSER VERIFIED" : "HASH RECORDED"}
+            </span>
+            <button className="verify-button" onClick={verifyEvidence} disabled={verification.state === "loading"}>
+              <ShieldCheck size={16} />
+              {verification.state === "loading" ? "VERIFYING…" : "VERIFY EVIDENCE"}
+            </button>
           </section>
         </aside>
 
@@ -252,6 +294,42 @@ function App() {
         <b>→</b>
         <div><ShieldCheck /><span>DETERMINISTICALLY VERIFIED</span><strong>PARALLAX</strong></div>
       </footer>
+      {verification.state !== "idle" && verification.state !== "loading" && (
+        <div className="verification-backdrop" role="presentation">
+          <section className="verification-dialog" role="dialog" aria-modal="true" aria-labelledby="verification-title">
+            <header>
+              <div>
+                <span className="eyebrow">JUDGE VERIFICATION MODE</span>
+                <h2 id="verification-title">Independent evidence receipt</h2>
+              </div>
+              <button aria-label="Close verification" title="Close verification" onClick={() => setVerification({ state: "idle", result: null, error: "" })}><X size={18} /></button>
+            </header>
+            {verification.result ? (
+              <>
+                <div className={`verification-verdict verification-verdict--${verification.state}`}>
+                  {verification.state === "verified" ? <ShieldCheck size={30} /> : <CircleAlert size={30} />}
+                  <div><span>RAW ARTIFACT VERIFICATION</span><strong>{verification.state === "verified" ? "EVIDENCE VERIFIED" : "VERIFICATION FAILED"}</strong></div>
+                </div>
+                <div className="verification-checks">
+                  {verification.result.checks.map((item) => (
+                    <div className={item.passed ? "pass" : "fail"} key={item.id}>
+                      {item.passed ? <Check size={16} /> : <X size={16} />}
+                      <span>{item.label}</span>
+                      <code title={item.detail}>{item.detail}</code>
+                    </div>
+                  ))}
+                </div>
+                <footer>
+                  <p>Computed locally from the published Nemotron plan, Nebius execution and assembled proof. No server verdict was trusted.</p>
+                  <button onClick={downloadReceipt}><Download size={16} /> DOWNLOAD RECEIPT</button>
+                </footer>
+              </>
+            ) : (
+              <div className="verification-error"><CircleAlert /> {verification.error}</div>
+            )}
+          </section>
+        </div>
+      )}
     </main>
   );
 }

@@ -1,0 +1,74 @@
+{
+  "experiment_id": "px_4ce9db004ec3",
+  "verdict": "PROVEN",
+  "model_role": "hypothesis_only",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "model_usage": {
+    "completion_tokens": 969,
+    "prompt_tokens": 663,
+    "total_tokens": 1632,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 663
+  },
+  "hypothesis": "If two clients interleave after reading the same cart, both will successfully insert and commit a payment, causing more than one successful payment.",
+  "expected_observable": "payment_count will increase from 1 to 2 while ticket_count remains unchanged and response_status stays 200 for both responses.",
+  "ranked_candidates": [
+    {
+      "type": "interleave_two_actors_after_read",
+      "score": 0.9,
+      "rationale": "Creates concurrent conflicting writes that can directly violate the at-most-one-payment invariant."
+    },
+    {
+      "type": "delay_response",
+      "score": 0.7,
+      "rationale": "Allows a client to retry after payment commit, potentially causing a second payment if the server is not idempotent."
+    },
+    {
+      "type": "drop_response_after_commit",
+      "score": 0.5,
+      "rationale": "Similar to delay but loses the acknowledgment entirely; relies on client timeout behavior, making it slightly less direct."
+    }
+  ],
+  "branch_point": "request accepted",
+  "invariant": "PAY-001",
+  "planned_intervention": "interleave_two_actors_after_read",
+  "executed_intervention": "interleave_two_actors_after_read",
+  "plan_matches_execution": true,
+  "planner_selection_valid": true,
+  "same_checkpoint": true,
+  "checkpoint_uuid": "939645f2-e92f-4dab-83d5-47c09d59ca07",
+  "control": {
+    "branch": "control",
+    "events": [
+      "actor-a POST /checkout",
+      "actor-a READ cart",
+      "actor-a COMMIT payment",
+      "HTTP 200 delivered"
+    ],
+    "invariant": "PASS",
+    "payment_count": 1,
+    "ticket_count": 1,
+    "total_charged_cents": 4900
+  },
+  "counterfactual": {
+    "branch": "interleave_two_actors_after_read",
+    "events": [
+      "actor-a POST /checkout",
+      "actor-b POST /checkout",
+      "actor-a READ cart",
+      "actor-b READ cart",
+      "INTERLEAVE actors after cart read",
+      "actor-a COMMIT payment",
+      "actor-b COMMIT payment",
+      "HTTP 200 delivered"
+    ],
+    "invariant": "FAIL",
+    "payment_count": 2,
+    "ticket_count": 1,
+    "total_charged_cents": 9800
+  },
+  "sources": {
+    "experiment_plan": "sha256:d1e949746d6091d70c733ba903672b77560ddf09da80605066772519429a2454",
+    "sandbox_execution": "sha256:f8588437b35f44d8544fce58455001b5aba22b8f2bea995e45b8205c0122a1c1"
+  }
+}

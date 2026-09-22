@@ -1,12 +1,13 @@
 {
   "name": "parallax-control-deck",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1"
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test src/*.test.js"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",

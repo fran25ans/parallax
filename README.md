@@ -47,7 +47,11 @@ The committed proofs are small, inspectable JSON documents:
 - [Frozen v0.1 baseline](https://github.com/fran25ans/parallax/tree/v0.1.0)
 
 The replay UI reads those proofs directly. It does not invent findings and it
-makes no paid model or Sandbox calls while open.
+makes no paid model or Sandbox calls while open. In v0.4, **Judge Verification
+Mode** fetches the published Nemotron plan, Nebius execution and assembled proof,
+recomputes every SHA-256 hash in the browser, and independently evaluates the
+conditions behind `PROVEN`. The resulting verification receipt can be downloaded
+as JSON.
 
 ## Why Nemotron is necessary
 
@@ -95,15 +99,10 @@ npm ci
 cd ..
 ```
 
-Start the read-only evidence API:
+Build the public evidence catalog and start the Control Deck:
 
 ```bash
-.venv/bin/uvicorn parallax.api:app --host 127.0.0.1 --port 8810
-```
-
-In a second terminal:
-
-```bash
+parallax static-catalog
 cd web
 npm run dev
 ```
@@ -192,7 +191,7 @@ If any condition is missing, PARALLAX fails closed with `NOT_PROVEN`.
 
 ## Scope
 
-PARALLAX v0.3 focuses on two deeply demonstrated classes rather than broad,
+PARALLAX v0.4 focuses on two deeply demonstrated classes rather than broad,
 shallow scanning. It intentionally excludes extra agents, RAG, model swarms,
 and unrelated vulnerability catalogs.
 

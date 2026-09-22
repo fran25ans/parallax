@@ -24,6 +24,13 @@ class StaticCatalogTest(unittest.TestCase):
         for entry in catalog["proofs"]:
             self.assertEqual(entry["proof"]["verdict"], "PROVEN")
             self.assertEqual(len(entry["proof"]["evidence_sha256"]), 64)
+            self.assertEqual(
+                set(entry["artifacts"]),
+                {"assembled_proof", "experiment_plan", "sandbox_execution"},
+            )
+            self.assertTrue(
+                all(len(artifact["sha256"]) == 64 for artifact in entry["artifacts"].values())
+            )
 
     def test_written_catalog_round_trips(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -33,6 +40,10 @@ class StaticCatalogTest(unittest.TestCase):
                 json.loads(output.read_text(encoding="utf-8")),
                 build_static_catalog(ROOT / "evidence"),
             )
+            public_evidence = output.parent / "evidence"
+            self.assertTrue((public_evidence / "counterfactual-proof.json").is_file())
+            self.assertTrue((public_evidence / "nemotron-experiment-plan-v0.3.json").is_file())
+            self.assertTrue((public_evidence / "nebius-ticketshop-proof-v0.3.json").is_file())
 
 
 if __name__ == "__main__":
