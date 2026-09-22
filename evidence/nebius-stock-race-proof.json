@@ -1,0 +1,30 @@
+{
+  "checkpoint_uuid": "ce5050ab-9963-4275-b596-115bb0fb7ea1",
+  "fixture_sha256": "sha256:bcfac18722d1707e94c1dfa0dfadcda7cdc3d47ab28d33fa1d4c7d133e09ba27",
+  "control": {
+    "available_stock": 0,
+    "branch": "control",
+    "events": [
+      "buyer-a READ stock=1",
+      "buyer-a COMMIT sale"
+    ],
+    "invariant": "PASS",
+    "sold_count": 1
+  },
+  "counterfactual": {
+    "available_stock": -1,
+    "branch": "race",
+    "events": [
+      "buyer-a READ stock=1",
+      "buyer-b READ stock=1",
+      "INTERLEAVE buyers after stock read",
+      "buyer-a COMMIT sale",
+      "buyer-b COMMIT sale"
+    ],
+    "invariant": "FAIL",
+    "sold_count": 2
+  },
+  "same_checkpoint": true,
+  "single_intervention": "buyers_after_stock_read=INTERLEAVED",
+  "proven": true
+}

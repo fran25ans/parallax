@@ -1,0 +1,48 @@
+{
+  "experiment_id": "px_8d53002863b5",
+  "verdict": "PROVEN",
+  "model_role": "hypothesis_only",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "model_usage": {
+    "completion_tokens": 277,
+    "prompt_tokens": 224,
+    "total_tokens": 501,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 224
+  },
+  "hypothesis": "Two buyers interleaving after reading stock will both observe stock=1, each insert a sale and decrement stock, causing the final stock to become -1 and the ticket to be sold twice.",
+  "branch_point": "after_stock_read_before_sale_insert",
+  "invariant": "STOCK-001",
+  "planned_intervention": "interleave_two_buyers_after_stock_read",
+  "executed_intervention": "interleave_two_buyers_after_stock_read",
+  "plan_matches_execution": true,
+  "same_checkpoint": true,
+  "checkpoint_uuid": "ce5050ab-9963-4275-b596-115bb0fb7ea1",
+  "control": {
+    "available_stock": 0,
+    "branch": "control",
+    "events": [
+      "buyer-a READ stock=1",
+      "buyer-a COMMIT sale"
+    ],
+    "invariant": "PASS",
+    "sold_count": 1
+  },
+  "counterfactual": {
+    "available_stock": -1,
+    "branch": "race",
+    "events": [
+      "buyer-a READ stock=1",
+      "buyer-b READ stock=1",
+      "INTERLEAVE buyers after stock read",
+      "buyer-a COMMIT sale",
+      "buyer-b COMMIT sale"
+    ],
+    "invariant": "FAIL",
+    "sold_count": 2
+  },
+  "sources": {
+    "experiment_plan": "sha256:92cb1b63511829ba95c1ae21385b5ac6aae602917e8ee17562f46d07b5bafe30",
+    "sandbox_execution": "sha256:37e04c70c311086f400da184a1f71f796e3f13ee785fc447eb8e64ad9951d9d8"
+  }
+}

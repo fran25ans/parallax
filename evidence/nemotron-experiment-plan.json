@@ -1,0 +1,17 @@
+{
+  "branch_point": "post_checkout_after_commit",
+  "intervention": {
+    "type": "drop_response_after_commit"
+  },
+  "hypothesis": "Dropping the HTTP response after the payment commit will cause the client to retry the checkout request, leading to a second successful payment for the same cart and thus violating invariant PAY-001.",
+  "target_invariant": "PAY-001",
+  "reason": "The checkout endpoint lacks idempotency protection; simulating a lost acknowledgment via drop_response_after_commit exposes whether a retry creates a duplicate payment.",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "usage": {
+    "completion_tokens": 448,
+    "prompt_tokens": 236,
+    "total_tokens": 684,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 236
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "checkpoint_uuid": "cd457ce0-d944-4111-b107-3e09563ff4db",
+  "fixture_sha256": "sha256:18652a07ada92a041f0dadfb9e8bbfb4fb8342966f19a23358d1d959c2e12be2",
+  "control": {
+    "branch": "control",
+    "events": [
+      "POST /checkout",
+      "COMMIT payment",
+      "HTTP 200 delivered"
+    ],
+    "invariant": "PASS",
+    "payment_count": 1,
+    "ticket_count": 1,
+    "total_charged_cents": 4900
+  },
+  "counterfactual": {
+    "branch": "response-lost",
+    "events": [
+      "POST /checkout",
+      "COMMIT payment",
+      "DROP response",
+      "CLIENT retry",
+      "POST /checkout",
+      "COMMIT payment"
+    ],
+    "invariant": "FAIL",
+    "payment_count": 2,
+    "ticket_count": 1,
+    "total_charged_cents": 9800
+  },
+  "same_checkpoint": true,
+  "single_intervention": "response_after_commit=LOST",
+  "proven": true
+}

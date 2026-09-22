@@ -1,0 +1,52 @@
+{
+  "experiment_id": "px_037677fe0b8d",
+  "verdict": "PROVEN",
+  "model_role": "hypothesis_only",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "model_usage": {
+    "completion_tokens": 448,
+    "prompt_tokens": 236,
+    "total_tokens": 684,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 236
+  },
+  "hypothesis": "Dropping the HTTP response after the payment commit will cause the client to retry the checkout request, leading to a second successful payment for the same cart and thus violating invariant PAY-001.",
+  "branch_point": "post_checkout_after_commit",
+  "invariant": "PAY-001",
+  "planned_intervention": "drop_response_after_commit",
+  "executed_intervention": "drop_response_after_commit",
+  "plan_matches_execution": true,
+  "same_checkpoint": true,
+  "checkpoint_uuid": "cd457ce0-d944-4111-b107-3e09563ff4db",
+  "control": {
+    "branch": "control",
+    "events": [
+      "POST /checkout",
+      "COMMIT payment",
+      "HTTP 200 delivered"
+    ],
+    "invariant": "PASS",
+    "payment_count": 1,
+    "ticket_count": 1,
+    "total_charged_cents": 4900
+  },
+  "counterfactual": {
+    "branch": "response-lost",
+    "events": [
+      "POST /checkout",
+      "COMMIT payment",
+      "DROP response",
+      "CLIENT retry",
+      "POST /checkout",
+      "COMMIT payment"
+    ],
+    "invariant": "FAIL",
+    "payment_count": 2,
+    "ticket_count": 1,
+    "total_charged_cents": 9800
+  },
+  "sources": {
+    "experiment_plan": "sha256:9ffe5e1f6cdd929bfd05d267ed07159a20f331b600e4a99d89df105d42ed57c8",
+    "sandbox_execution": "sha256:f63e04e4a2b9e4a20cb6c4b136cd24168128da5d42703b63827f2c679f068f03"
+  }
+}

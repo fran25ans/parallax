@@ -1,0 +1,17 @@
+{
+  "branch_point": "after_stock_read_before_sale_insert",
+  "intervention": {
+    "type": "interleave_two_buyers_after_stock_read"
+  },
+  "hypothesis": "Two buyers interleaving after reading stock will both observe stock=1, each insert a sale and decrement stock, causing the final stock to become -1 and the ticket to be sold twice.",
+  "target_invariant": "STOCK-001",
+  "reason": "The absence of a lock or atomic constraint around the read\u2011modify\u2011write sequence creates a classic race condition; forcing an interleaving after the read exposes whether the invariant is violated.",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "usage": {
+    "completion_tokens": 277,
+    "prompt_tokens": 224,
+    "total_tokens": 501,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 224
+  }
+}

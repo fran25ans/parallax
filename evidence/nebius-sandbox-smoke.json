@@ -1,0 +1,19 @@
+{
+  "checkpoint_uuid": "51ae9a22-0416-4a2d-ad28-a65f399a9c56",
+  "image": "busybox:latest",
+  "branches": [
+    {
+      "name": "control",
+      "parent_uuid": "51ae9a22-0416-4a2d-ad28-a65f399a9c56",
+      "result_uuid": "None",
+      "stdout": "timeline=base\ntimeline=control\n"
+    },
+    {
+      "name": "counterfactual",
+      "parent_uuid": "51ae9a22-0416-4a2d-ad28-a65f399a9c56",
+      "result_uuid": "None",
+      "stdout": "timeline=base\ntimeline=counterfactual\n"
+    }
+  ],
+  "same_parent": true
+}
