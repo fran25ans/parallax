@@ -69,11 +69,14 @@ function Branch({ tone, name, subtitle, events, step, resultCount, metricLabel, 
 }
 
 function App() {
+  const captureParams = new URLSearchParams(window.location.search);
   const [proof, setProof] = useState(null);
   const [catalog, setCatalog] = useState([]);
-  const [selected, setSelected] = useState("payment-retry");
+  const [selected, setSelected] = useState(
+    captureParams.get("experiment") || "payment-retry",
+  );
   const [error, setError] = useState("");
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(Number(captureParams.get("step") || 0));
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
@@ -84,21 +87,16 @@ function App() {
       })
       .then((payload) => {
         setCatalog(payload.proofs);
-        setProof(payload.proofs[0].proof);
-        setSelected(payload.proofs[0].id);
+        const requested = captureParams.get("experiment");
+        const initial = payload.proofs.find((entry) => entry.id === requested)
+          || payload.proofs[0];
+        setProof(initial.proof);
+        setSelected(initial.id);
       })
       .catch((reason) => setError(reason.message));
   }, []);
 
   const replay = proof?.invariant === "STOCK-001" ? stockReplay : paymentReplay;
-
-  useEffect(() => {
-    const match = catalog.find((entry) => entry.id === selected);
-    if (!match) return;
-    setPlaying(false);
-    setStep(0);
-    setProof(match.proof);
-  }, [catalog, selected]);
 
   useEffect(() => {
     if (!playing) return undefined;
@@ -130,6 +128,12 @@ function App() {
   const branchPointLabel = isStock ? "After both stock reads" : "After payment commit";
   const deltaLabel = isStock ? "+1 oversold ticket" : "+1 duplicate payment";
   const selectedIndex = Math.max(0, catalog.findIndex((entry) => entry.id === selected));
+  const selectExperiment = (entry) => {
+    setPlaying(false);
+    setStep(0);
+    setSelected(entry.id);
+    setProof(entry.proof);
+  };
   return (
     <main className="deck">
       <header className="topbar">
@@ -155,7 +159,7 @@ function App() {
 
       <nav className="experiment-switcher" aria-label="Counterfactual experiments">
         {catalog.map((entry, index) => (
-          <button className={entry.id === selected ? "active" : ""} key={entry.id} onClick={() => setSelected(entry.id)}>
+          <button className={entry.id === selected ? "active" : ""} key={entry.id} onClick={() => selectExperiment(entry)}>
             <span>EXPERIMENT #{String(index + 1).padStart(3, "0")}</span>
             <strong>{entry.proof.invariant}</strong>
             <small>{entry.id === "stock-race" ? "CONCURRENCY RACE" : "TEMPORAL RETRY"}</small>

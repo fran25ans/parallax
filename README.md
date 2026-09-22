@@ -1,161 +1,173 @@
 # PARALLAX
 
-**Your app works in this timeline. PARALLAX finds the timeline where it breaks.**
+[![CI](https://github.com/fran25ans/parallax/actions/workflows/ci.yml/badge.svg)](https://github.com/fran25ans/parallax/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/fran25ans/parallax)](https://github.com/fran25ans/parallax/releases)
+[![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-49d6d0)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-d8a84e.svg)](LICENSE)
 
-PARALLAX is a counterfactual bug laboratory. It begins with one known application
-state, forks that state into isolated timelines, changes one event, and lets
-deterministic invariants decide whether the alternate history exposed a real bug.
+**PARALLAX proves software failures by executing alternate realities from the same checkpoint.**
 
-## Counterfactual Control Deck
+> **Nemotron proposes. Nebius executes. PARALLAX proves.**
 
-The deck renders the real assembled proof from
-`evidence/counterfactual-proof.json`. It does not simulate findings or call
-Nebius while the UI is open.
+AI usually explains why software *might* fail. PARALLAX creates a control future
+and a counterfactual future from one identical application state, changes one
+event, and lets deterministic invariants decide whether the alternate timeline
+contains a real causal failure.
 
-Install the local web dependencies once:
+![PARALLAX Control Deck proving STOCK-001](docs/assets/control-deck-stock.png)
+
+## The proof in 15 seconds
+
+![Synchronized PARALLAX replay](docs/assets/parallax-replay.gif)
+
+1. **Nemotron Super** proposes one bounded, testable intervention.
+2. **Nebius Sandboxes** checkpoints the application and executes two branches.
+3. The control branch preserves normal behavior.
+4. The counterfactual branch changes exactly one causal variable.
+5. **PARALLAX**, not the model, evaluates the final states and issues `PROVEN`
+   only when the control passes and the counterfactual fails.
+
+## Public baseline
+
+PARALLAX v0.1.0 contains two independently executed failure classes:
+
+| Invariant | Failure class | Control | Counterfactual | Verdict |
+| --- | --- | --- | --- | --- |
+| `PAY-001` | Temporal retry after a lost response | 1 payment / PASS | 2 payments / FAIL | **PROVEN** |
+| `STOCK-001` | Interleaved stock race | 1 sale / PASS | 2 sales, stock -1 / FAIL | **PROVEN** |
+
+The committed proofs are small, inspectable JSON documents:
+
+- [PAY-001 assembled proof](evidence/counterfactual-proof.json)
+- [STOCK-001 assembled proof](evidence/stock-race-counterfactual-proof.json)
+- [Baseline hashes and acceptance record](BASELINE.md)
+
+The replay UI reads those proofs directly. It does not invent findings and it
+makes no paid model or Sandbox calls while open.
+
+## Architecture
+
+![PARALLAX architecture](docs/architecture.svg)
+
+The model is deliberately outside the trust boundary of the final verdict.
+Nemotron can formulate a useful hypothesis, but only reproducible branch state
+and deterministic invariant checks can elevate a result to `PROVEN`.
+
+## Run the Control Deck
+
+Requirements: Python 3.11 or 3.12, Node.js 22+, and Git.
 
 ```bash
+git clone https://github.com/fran25ans/parallax.git
+cd parallax
+
+python3 -m venv .venv
 .venv/bin/pip install -e '.[web]'
-cd web && npm install && cd ..
+
+cd web
+npm ci
+cd ..
 ```
 
-Run the read-only evidence API and the deck in separate terminals:
+Start the read-only evidence API:
 
 ```bash
 .venv/bin/uvicorn parallax.api:app --host 127.0.0.1 --port 8810
 ```
+
+In a second terminal:
 
 ```bash
 cd web
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173/`, then play or scrub the synchronized replay.
-The UI performs no paid model or Sandbox operations.
+Open <http://127.0.0.1:5173/>. Select `PAY-001` or `STOCK-001`, then play or
+scrub the synchronized timelines.
 
-This first technical spike demonstrates a checkout idempotency failure:
+## Reproduce locally without paid services
+
+The local TicketShop proof and generated regression test require no API key:
+
+```bash
+.venv/bin/parallax demo --output evidence/runs/local-demo
+.venv/bin/parallax verify evidence/runs/local-demo/evidence
+```
+
+Expected conclusion:
 
 ```text
-                    SAME CHECKPOINT
-                          |
-              +-----------+-----------+
-              |                       |
-         CONTROL                  RESPONSE LOST
-              |                       |
-        payment committed        payment committed
-        response delivered       response lost
-              |                  client retries
-              |                  payment committed
-              |                       |
-       1 payment / PASS          2 payments / FAIL
+CONTROL:                  1 payment / PASS
+COUNTERFACTUAL:           2 payments / FAIL
+CAUSAL COUNTEREXAMPLE:    PROVEN
+REGRESSION REPRODUCTION:  VERIFIED
 ```
 
-The verifier, not an LLM, decides whether the experiment is proven. A proof requires:
-
-1. Both branches started from the same checkpoint hash.
-2. Exactly one declared intervention changed.
-3. The control branch passed the invariant.
-4. The counterfactual branch failed the invariant.
-
-## Hackathon baseline
-
-PARALLAX v0.1 demonstrates two distinct failure classes:
-
-- `PAY-001`: a temporal retry after a response is lost following commit creates
-  a duplicate payment.
-- `STOCK-001`: two buyers interleaved after reading the final stock unit sell
-  the same ticket twice.
-
-Both experiments were proposed by Nemotron Super, executed in branches created
-from a Nebius Sandbox checkpoint, and verified by deterministic invariants.
-See [BASELINE.md](BASELINE.md) for evidence hashes and the acceptance record.
-
-## Run the proof
-
-No external services or paid APIs are needed for this spike.
+Run the complete test suite and production frontend build:
 
 ```bash
-cd parallax
-PYTHONPATH=src python3 -m parallax demo --output evidence/runs/local-demo
+.venv/bin/python -m unittest discover -s tests -v
+npm run build --prefix web
 ```
 
-Expected result:
+## Reproduce on Nebius
 
-```text
-TIMELINE A / CONTROL
-  payments:         1
-  PAY-001:          PASS
-
-TIMELINE B / RESPONSE LOST
-  payments:         2
-  PAY-001:          FAIL
-
-CAUSAL COUNTEREXAMPLE: PROVEN
-REGRESSION REPRODUCTION: VERIFIED
-```
-
-Verify that the evidence bundle has not changed:
+Live operations are fail-closed. They require the `nebius` dependency, local
+credentials, and an explicit temporary spend switch. Dry runs make no remote
+calls:
 
 ```bash
-PYTHONPATH=src python3 -m parallax verify evidence/runs/local-demo/evidence
+.venv/bin/pip install -e '.[nebius]'
+cp .env.example .env.local
+
+.venv/bin/parallax design-experiment --scenario stock-race
+.venv/bin/parallax sandbox-experiment --scenario stock-race
 ```
 
-## Tests
-
-```bash
-python3 -m unittest discover -s tests -v
-```
-
-## Current boundary
-
-This commit validates the counterfactual engine locally using copied SQLite
-checkpoints. Nebius Sandbox checkpoint/fork semantics and Nemotron experiment
-design are the next integration milestones. The project does not yet claim that
-the local copy mechanism is equivalent to a live VM checkpoint.
-
-## Nebius Sandbox safety gate
-
-Preview the exact smoke-test plan without making a remote call:
-
-```bash
-PYTHONPATH=src python3 -m parallax sandbox-smoke
-```
-
-A live run requires both the Nebius optional dependency and an explicit,
-temporary spend switch. It is intentionally limited to one checkpoint and two
-small BusyBox branches and no model inference:
+After setting `NEBIUS_API_KEY` and `NEBIUS_PROJECT_ID` in `.env.local`, one
+intentional live run is:
 
 ```bash
 PARALLAX_ALLOW_NEBIUS_SPEND=true \
-  PYTHONPATH=src python3 -m parallax sandbox-smoke --live
-```
-
-The local `.env.local` file must contain both `NEBIUS_API_KEY` and
-`NEBIUS_PROJECT_ID`. Neither value is included in evidence or logs.
-
-After the branching smoke test succeeds, preview or execute the real TicketShop
-counterfactual experiment:
-
-```bash
-PYTHONPATH=src python3 -m parallax sandbox-experiment
+  .venv/bin/parallax design-experiment \
+  --scenario stock-race --live \
+  --output evidence/nemotron-stock-race-plan.json
 
 PARALLAX_ALLOW_NEBIUS_SPEND=true \
-  PYTHONPATH=src python3 -m parallax sandbox-experiment --live
+  .venv/bin/parallax sandbox-experiment \
+  --scenario stock-race --live \
+  --output evidence/nebius-stock-race-proof.json
+
+.venv/bin/parallax assemble-proof \
+  --plan evidence/nemotron-stock-race-plan.json \
+  --execution evidence/nebius-stock-race-proof.json \
+  --output evidence/stock-race-counterfactual-proof.json
 ```
 
-Nemotron experiment design is a separate, bounded step. Dry-run first; the live
-command makes exactly one request with a 500-token completion ceiling:
+The spend switch is scoped to each command and is not stored. Credentials are
+ignored by Git and never written to proof evidence.
 
-```bash
-PYTHONPATH=src python3 -m parallax design-experiment
+## Evidence and trust model
 
-PARALLAX_ALLOW_NEBIUS_SPEND=true \
-  PYTHONPATH=src python3 -m parallax design-experiment --live
-```
+A proof requires all of the following:
 
-Combine the validated hypothesis and the deterministic Sandbox result without
-making another remote call:
+1. Both branches reference the same checkpoint.
+2. Exactly one declared intervention differs.
+3. The Nemotron plan matches the executed intervention.
+4. The control branch passes the invariant.
+5. The counterfactual branch fails the invariant.
+6. The evidence source hashes remain verifiable.
 
-```bash
-PYTHONPATH=src python3 -m parallax assemble-proof
-```
+If any condition is missing, PARALLAX fails closed with `NOT_PROVEN`.
+
+## Scope
+
+PARALLAX v0.2 focuses on two deeply demonstrated classes rather than broad,
+shallow scanning. It intentionally excludes extra agents, RAG, model swarms,
+and unrelated vulnerability catalogs.
+
+**Your app works in this timeline. PARALLAX finds the timeline where it breaks.**
+
+## License
+
+[MIT](LICENSE) © 2026 Francisco Jose Gimeno
